@@ -114,31 +114,32 @@ namespace VepPrototype.DynamicLinq
         }
 
         [Test]
-        public void Test1()
+        public void Test1_Applying_Where_Concatenation()
         {
-            //var query = vardkontakt
-            //    .ConditionWhere(() => vardNiva.Contains(VårdNivåTyp.Länssjukvård),
-            //        f => f.VårdNivå == VårdNivåTyp.Länssjukvård)
-            //        .ConditionWhere(() => vardNiva.Contains(VårdNivåTyp.Regionsjukvård),
-            //            f => f.VårdNivå == VårdNivåTyp.Regionsjukvård)
-            //            .ConditionWhere(() => vardNiva.Contains(VårdNivåTyp.Rikssjukvård), 
-            //                f => f.VårdNivå == VårdNivåTyp.Rikssjukvård);
+            var query = vardkontakt
+                .ConditionWhere(() => vardNiva.Contains(VårdNivåTyp.Länssjukvård),
+                    f => f.VårdNivå == VårdNivåTyp.Länssjukvård)
+                    .ConditionWhere(() => vardNiva.Contains(VårdNivåTyp.Regionsjukvård),
+                        f => f.VårdNivå == VårdNivåTyp.Regionsjukvård)
+                        .ConditionWhere(() => vardNiva.Contains(VårdNivåTyp.Rikssjukvård),
+                            f => f.VårdNivå == VårdNivåTyp.Rikssjukvård);
 
             var query2 = vardkontakt.AsQueryable()
                 .ConditionalWhere(() => vardNiva.Contains(VårdNivåTyp.Länssjukvård),
-                    f => f.VårdNivå == VårdNivåTyp.Länssjukvård)
-                .ConditionalWhere(() => vardNiva.Contains(VårdNivåTyp.Regionsjukvård),
-                    f => f.VårdNivå == VårdNivåTyp.Regionsjukvård);
-            //.ConditionalWhere(() => vardNiva.Contains(VårdNivåTyp.Rikssjukvård),
-            //    f => f.VårdNivå == VårdNivåTyp.Rikssjukvård);
+                    f => f.VårdNivå == VårdNivåTyp.Länssjukvård);
+            
+            //adding this 2nd conditionalwhere applies Where().Where() and this is not what i want right now
+            //further investigation about this!
+                //.ConditionalWhere(() => vardNiva.Contains(VårdNivåTyp.Regionsjukvård),
+                //    f => f.VårdNivå == VårdNivåTyp.Regionsjukvård);
+                //.ConditionalWhere(() => vardNiva.Contains(VårdNivåTyp.Rikssjukvård),
+                //    f => f.VårdNivå == VårdNivåTyp.Rikssjukvård);
 
-
-
-            //var result = query.ToList();
+            var result = query.ToList();
             var result2 = query2.ToList();
 
-            //Assert.True(result.Count == 2);
-
+            Assert.True(result.Count == 0);
+            Assert.True(result2.Count == 2);
         }
 
         [Test]
@@ -175,13 +176,10 @@ namespace VepPrototype.DynamicLinq
 
             Assert.AreEqual(4, sut.Count());
 
-
             /*Lambda Expression
              *.Lambda #Lambda1<System.Func`2[VepPrototype.Models.Vårdkontakt,System.Boolean]>(VepPrototype.Models.Vårdkontakt $f) {
                    (System.Int32)$f.VårdNivå == 1 || (System.Int32)$f.VårdNivå == 2 || (System.Int32)$f.VårdNivå == 3
                     }
-             *
-             *
              */
         }
 
@@ -223,13 +221,8 @@ namespace VepPrototype.DynamicLinq
                 .Lambda #Lambda1<System.Func`2[VepPrototype.Models.Vårdkontakt,System.Boolean]>(VepPrototype.Models.Vårdkontakt $param) {
 
                     (False || (System.Int32)$param.VårdNivå == 1) && (System.Int32)$param.VårdForm == 2
-            
                 }
-             *
-             *
              */
-
-
         }
 
 
@@ -253,8 +246,6 @@ namespace VepPrototype.DynamicLinq
              .Lambda #Lambda1<System.Func`2[VepPrototype.Models.Vårdkontakt,System.Boolean]>(VepPrototype.Models.Vårdkontakt $param) {
                 (False || (System.Int32)$param.VårdNivå == 1) && (System.Int32)$param.VårdForm == 2 && (System.Int32)$param.EkonomiskOmrådesKod == 2
             }
-             *
-             *
              */
         }
 
@@ -307,9 +298,6 @@ namespace VepPrototype.DynamicLinq
 
             var data = predicate.ToString();
 
-
-            //var func = PredicateBuilder.CreateFunc<Vårdkontakt>(f => f.VårdNivå == VårdNivåTyp.Länssjukvård);
-            
             Func<Vårdkontakt, bool> predicateCompiled = predicate2.Compile(); //transform it to Func
 
             var sut = vardkontakt.AsQueryable().Where(predicate).ToList();
@@ -322,9 +310,6 @@ namespace VepPrototype.DynamicLinq
                     ((System.Int32)$f.VårdForm == 2 || (System.Int32)$f.VårdForm == 1) && 
                     ((System.Int32)$f.EkonomiskOmrådesKod == 2 || (System.Int32)$f.EkonomiskOmrådesKod == 1)
             }
-            
-             *
-             *
              */
         }
 
@@ -345,8 +330,6 @@ namespace VepPrototype.DynamicLinq
                 .Where("EkonomiskOmrådesKod == @0", EkonomiskOmrådesKodTyp.Somatik)
                 .OrderBy("PatientPersonnummer")
                 .ToList();
-                //.Select("new(PatientPersonnummer as Personnr, DrgKod)")
-                //.AsQueryable();
             
             Assert.AreEqual(4, sut.Count());
             Assert.AreEqual("199504040800", sut[0].PatientPersonnummer);
@@ -366,7 +349,6 @@ namespace VepPrototype.DynamicLinq
         [Test]
         public void Test_DymanicLinq_Expression_Build1()
         {
-
             // Manually build the expression tree for 
             // the lambda expression num => num < 5.
             ParameterExpression numParam = Expression.Parameter(typeof(int), "num");
@@ -383,8 +365,6 @@ namespace VepPrototype.DynamicLinq
         [Test]
         public void Test_DymanicLinq_Expression_Build2()
         {
-            //var predicate = PredicateBuilder.Create<Vårdkontakt>(f => f.VårdNivå == VårdNivåTyp.Länssjukvård);
-
             // Manually build the expression tree for the lambda expression f => (f == Länssjukvård)
 
             ParameterExpression parameter = Expression.Parameter(typeof(VårdNivåTyp), "f");
@@ -402,8 +382,6 @@ namespace VepPrototype.DynamicLinq
         public void Test_DymanicLinq_Expression_Build3()
         {
             //https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/expression-trees/how-to-use-expression-trees-to-build-dynamic-queries
-
-            //var predicate = PredicateBuilder.Create<Vårdkontakt>(f => f.VårdNivå == VårdNivåTyp.Länssjukvård);
 
             // Manually build the expression tree for the lambda expression x => x.VårdNivå == VårdNivåTyp.Länssjukvård
 
@@ -448,11 +426,8 @@ namespace VepPrototype.DynamicLinq
         {
             //https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/expression-trees/how-to-use-expression-trees-to-build-dynamic-queries
 
-            //var predicate = PredicateBuilder.Create<Vårdkontakt>(f => f.VårdNivå == VårdNivåTyp.Länssjukvård);
-
-            // Manually build the expression tree for the lambda expression x => x.VårdNivå == VårdNivåTyp.Länssjukvård
-            //var generator = DebugInfoGenerator.CreatePdbGenerator();
-            //var document = Expression.SymbolDocument("AddDebug.txt");
+            // Manually build the expression tree for the lambda expression
+            // x => x.VårdNivå == VårdNivåTyp.Länssjukvård && x.VårdForm == VårdFormTyp.Sluten
 
             ParameterExpression parameter = Expression.Parameter(typeof(Vårdkontakt), "x");
 
