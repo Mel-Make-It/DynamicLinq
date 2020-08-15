@@ -295,14 +295,55 @@ namespace VepPrototype.DynamicLinq
             predicate3 = predicate3.Or(f => f.EkonomiskOmrådesKod == EkonomiskOmrådesKodTyp.Somatik);
 
             predicate = predicate.And(predicate2).And(predicate3);
-
-            var data = predicate.ToString();
-
-            Func<Vårdkontakt, bool> predicateCompiled = predicate2.Compile(); //transform it to Func
-
+            
             var sut = vardkontakt.AsQueryable().Where(predicate).ToList();
 
             Assert.AreEqual(3, sut.Count());
+        }
+
+        [Test]
+        public void Test_DymanicLinq_IQueryable_Information_Expressions()
+        {
+            var predicate = PredicateBuilder.Create<Vårdkontakt>(f => f.VårdNivå == VårdNivåTyp.Länssjukvård);
+
+            predicate = predicate.Or(f => f.VårdNivå == VårdNivåTyp.Regionsjukvård);
+
+            var predicate2 = PredicateBuilder.Create<Vårdkontakt>(f => f.VårdForm == VårdFormTyp.Öppen);
+
+            predicate2 = predicate2.Or(f => f.VårdForm == VårdFormTyp.Sluten);
+
+            var predicate3 =
+                PredicateBuilder.Create<Vårdkontakt>(f => f.EkonomiskOmrådesKod == EkonomiskOmrådesKodTyp.Psykiatri);
+
+            predicate3 = predicate3.Or(f => f.EkonomiskOmrådesKod == EkonomiskOmrådesKodTyp.Somatik);
+
+            predicate = predicate.And(predicate2).And(predicate3);
+
+            var predicateToString = predicate.ToString();
+            //f => ((((Convert(f.VårdNivå, Int32) == 1) OrElse (Convert(f.VårdNivå, Int32) == 2)) AndAlso ((Convert(f.VårdForm, Int32) == 2) OrElse (Convert(f.VårdForm, Int32) == 1))) AndAlso ((Convert(f.EkonomiskOmrådesKod, Int32) == 2) OrElse (Convert(f.EkonomiskOmrådesKod, Int32) == 1)))
+
+            Func<Vårdkontakt, bool> predicateCompiled = predicate2.Compile(); //transform it to Func
+
+            var queryExpression = vardkontakt.AsQueryable().Where(predicate).Expression;
+            var queryToString = vardkontakt.AsQueryable().Where(predicate).ToString();
+
+            //WHERE <- queryExpression variable
+            /*
+             *.Call System.Linq.Queryable.Where(
+                    .Constant<System.Linq.EnumerableQuery`1[VepPrototype.Models.Vårdkontakt]>(System.Collections.Generic.List`1[VepPrototype.Models.Vårdkontakt]),
+                    '(.Lambda #Lambda1<System.Func`2[VepPrototype.Models.Vårdkontakt,System.Boolean]>))
+
+                .Lambda #Lambda1<System.Func`2[VepPrototype.Models.Vårdkontakt,System.Boolean]>(VepPrototype.Models.Vårdkontakt $f) {
+                    ((System.Int32)$f.VårdNivå == 1 || (System.Int32)$f.VårdNivå == 2) && ((System.Int32)$f.VårdForm == 2 || (System.Int32)$f.VårdForm ==
+                    1) && ((System.Int32)$f.EkonomiskOmrådesKod == 2 || (System.Int32)$f.EkonomiskOmrådesKod == 1)
+                }
+             *
+             */
+
+            /* queryToString variable
+             * System.Collections.Generic.List`1[VepPrototype.Models.Vårdkontakt]
+             * .Where(f => ((((Convert(f.VårdNivå, Int32) == 1) OrElse (Convert(f.VårdNivå, Int32) == 2)) AndAlso ((Convert(f.VårdForm, Int32) == 2) OrElse (Convert(f.VårdForm, Int32) == 1))) AndAlso ((Convert(f.EkonomiskOmrådesKod, Int32) == 2) OrElse (Convert(f.EkonomiskOmrådesKod, Int32) == 1))))
+             */
 
             /*
              .Lambda #Lambda1<System.Func`2[VepPrototype.Models.Vårdkontakt,System.Boolean]>(VepPrototype.Models.Vårdkontakt $f) {
@@ -312,7 +353,7 @@ namespace VepPrototype.DynamicLinq
             }
              */
         }
-
+        
         [Test]
         public void Test_DymanicLinq_Expression1()
         {
@@ -462,7 +503,6 @@ namespace VepPrototype.DynamicLinq
 
             
         }
-
 
         [Test]
         public void Test_SprintFilter_Expression_Build5()
