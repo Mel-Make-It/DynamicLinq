@@ -279,7 +279,7 @@ namespace VepPrototype.DynamicLinq
         }
 
         [Test]
-        public void Test_All_Expressions_with_parentheses()
+        public void Test_More_Complex_Expressions_with_Parentheses()
         {
             var predicate = PredicateBuilder.Create<Vårdkontakt>(f => f.VårdNivå == VårdNivåTyp.Länssjukvård);
 
@@ -523,6 +523,95 @@ namespace VepPrototype.DynamicLinq
 
             Assert.AreEqual(0, sut.Count());
             
+        }
+
+
+        [Test]
+        public void Test_Possible_Approach_SprintFilter_Expressions_1()
+        {
+            List<VårdNivåTyp> test = new List<VårdNivåTyp>();
+
+            test.Add(VårdNivåTyp.Länssjukvård);
+            //vardNiva.Add(VårdNivåTyp.Regionsjukvård);
+            //vardNiva.Add(VårdNivåTyp.Rikssjukvård);
+
+            List<Expression<Func<Vårdkontakt, bool>>> expr = new List<Expression<Func<Vårdkontakt, bool>>>();
+
+            //vardNiva.ToList().ForEach(elem =>
+            //    {
+            //        var r = (VårdNivåTyp)elem;
+            //        expr.Add(PredicateBuilder.Create<Vårdkontakt>(f => f.VårdNivå == elem));
+            //    }
+            //    );
+
+
+            test.ToList().ForEach(elem => expr.Add(PredicateBuilder.Create<Vårdkontakt>(f => f.VårdNivå == elem)));
+
+            var result = expr.Aggregate((m, n) => m.Or(n));
+            
+
+
+            var sut = vardkontakt.AsQueryable().Where(result);
+
+            Assert.AreEqual(2, sut.Count());
+
+        }
+
+        [Test]
+        public void Test_Possible_Approach_SprintFilter_Expressions_2()
+        {
+            List<Expression<Func<Vårdkontakt, bool>>> expr = new List<Expression<Func<Vårdkontakt, bool>>>();
+            List<VårdNivåTyp> test = new List<VårdNivåTyp>();
+            test.Add(VårdNivåTyp.Länssjukvård);
+            
+            
+            test.ToList().ForEach(elem => expr.Add(PredicateBuilder.Create<Vårdkontakt>(f => f.VårdNivå == elem)));
+            var result = expr.Aggregate((m, n) => m.Or(n));
+
+            var sut = vardkontakt.AsQueryable().Where(result);
+            var expr1 = sut.Expression;
+
+            var serialized = Filter.Serialize<Vårdkontakt>(result);//VårdNivå eq 1
+
+
+            var pred = PredicateBuilder.Create<Vårdkontakt>(f => f.VårdNivå == VårdNivåTyp.Länssjukvård);
+
+            var sut2 = vardkontakt.AsQueryable().Where(pred);
+            var expr2 = sut2.Expression;
+
+            var serialized2 = Filter.Serialize<Vårdkontakt>(pred); //VårdNivå eq 1
+
+            var deserialized1 = Filter.Deserialize<Vårdkontakt>(serialized); //{t => (Convert(t.VårdNivå, Int32) == 1)}
+            var deserialized2 = Filter.Deserialize<Vårdkontakt>(serialized2);//{t => (Convert(t.VårdNivå, Int32) == 1)}
+
+            var sut3 = vardkontakt.AsQueryable().Where(deserialized1);
+            var sut4 = vardkontakt.AsQueryable().Where(deserialized2);
+
+
+            Assert.AreEqual(2, sut.Count());
+            Assert.AreEqual(2, sut2.Count());
+            Assert.AreEqual(2, sut3.Count());
+            Assert.AreEqual(2, sut4.Count());
+
+
+            /*
+             *deserialized1	
+                {t => (Convert(t.VårdNivå, Int32) == 1)}	System.Linq.Expressions.Expression<System.Func<VepPrototype.Models.Vårdkontakt, bool>> {System.Linq.Expressions.Expression1<System.Func<VepPrototype.Models.Vårdkontakt, bool>>}
+
+                .Lambda #Lambda1<System.Func`2[VepPrototype.Models.Vårdkontakt,System.Boolean]>(VepPrototype.Models.Vårdkontakt $t) {
+                    (System.Int32)$t.VårdNivå == 1
+                }
+
+                deserialized2	
+                {t => (Convert(t.VårdNivå, Int32) == 1)}	System.Linq.Expressions.Expression<System.Func<VepPrototype.Models.Vårdkontakt, bool>> {System.Linq.Expressions.Expression1<System.Func<VepPrototype.Models.Vårdkontakt, bool>>}
+
+                .Lambda #Lambda1<System.Func`2[VepPrototype.Models.Vårdkontakt,System.Boolean]>(VepPrototype.Models.Vårdkontakt $t) {
+                    (System.Int32)$t.VårdNivå == 1
+                }
+             *
+             */
+
+
         }
 
 
