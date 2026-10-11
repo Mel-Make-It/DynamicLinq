@@ -11,8 +11,12 @@ using VepPrototype.Models;
 
 namespace VepPrototype.DynamicLinq
 {
+    // Add some space to the class name to avoid conflicts with other classes in the same namespace.
+
     public class Tests
     {
+        // Here more comments as well
+
         List<VårdNivåTyp> vardNiva = new List<VårdNivåTyp>();
         List<Vårdkontakt> vardkontakt;
 
